@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ЦРВУ — ориентир стоимости стенда</title>
+<link rel="icon" href="assets/logos/crvu-favicon.png" type="image/png">
+<link rel="stylesheet" href="assets/css/fonts.css">
+<style>
+  :root { --ink: #1d2228; --ink-2: #5b6370; --line: #e5e2dc; --accent: #ff5a14; --soft: #fff1e8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 2rem 1.25rem; font: 16px/1.55 Manrope, system-ui, sans-serif; color: var(--ink); background: #f6f5f2; }
+  main { max-width: 760px; margin: 0 auto; padding: clamp(1.25rem, 4vw, 2.5rem); background: #fff; border: 1px solid var(--line); border-radius: 24px; }
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--line); }
+  header img { width: 170px; height: auto; display: block; }
+  header p { margin: 0; color: var(--ink-2); font-size: 0.875rem; text-align: right; }
+  h1 { margin: 1.5rem 0 0.25rem; font: 700 clamp(1.5rem, 4vw, 2rem)/1.15 Geologica, sans-serif; letter-spacing: -0.01em; }
+  .sum { margin: 1.25rem 0; padding: 1.25rem 1.4rem; border-radius: 18px; background: var(--soft); }
+  .sum span { display: block; font-size: 0.875rem; color: var(--ink-2); }
+  .sum b { display: block; font: 700 clamp(1.6rem, 5vw, 2.25rem)/1.15 Geologica, sans-serif; }
+  dl { display: grid; grid-template-columns: minmax(9rem, 14rem) 1fr; gap: 0; margin: 0; }
+  dt, dd { margin: 0; padding: 0.7rem 0; border-bottom: 1px solid var(--line); }
+  dt { color: var(--ink-2); }
+  dd { font-weight: 600; }
+  .note { margin: 1.5rem 0 0; padding: 1rem 1.2rem; border-radius: 14px; border: 1px solid var(--line); color: var(--ink-2); font-size: 0.9375rem; }
+  .act { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 1.4rem; border-radius: 999px; border: 0; font: 700 1rem Manrope, sans-serif; cursor: pointer; text-decoration: none; }
+  .btn--accent { background: var(--accent); color: #fff; }
+  .btn--soft { background: #fff; color: var(--ink); border: 1px solid var(--line); }
+  @media print { body { background: #fff; padding: 0; } main { border: 0; } .noprint { display: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="assets/logos/crvu-logo-header.webp" alt="ЦРВУ" width="205" height="44">
+    <p>+7 (495) 106-70-22 · manager@crvu.ru<br>ежедневно 9:30–18:30</p>
+  </header>
+  <h1>Ориентир стоимости стенда</h1>
+  <p id="date" style="margin:0;color:var(--ink-2)"></p>
+  <div class="sum"><span>Ориентир по калькулятору</span><b id="total">—</b></div>
+  <dl id="rows"></dl>
+  <p class="note">Это предварительный ориентир, а&nbsp;не&nbsp;коммерческое предложение. Точную смету по&nbsp;статьям подготовим по&nbsp;плану площадки. Аренда площади, сборы организатора, подключения и&nbsp;техконтроль площадки в&nbsp;расчёт не&nbsp;входят.</p>
+  <div class="act noprint">
+    <button class="btn btn--accent" type="button" onclick="print()">Сохранить в PDF / распечатать</button>
+    <a class="btn btn--soft" href="index.html#calculator">Вернуться к калькулятору</a>
+  </div>
+</main>
+<script>
+(function () {
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function f(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0'); }
+  var L = { standard: 'Стандарт', exclusive: 'Эксклюзив', premium: 'Премиум', linear: 'Линейный', corner: 'Угловой', peninsula: 'Полуостров', island: 'Остров' };
+  var rows = document.getElementById('rows'), total = document.getElementById('total');
+  document.getElementById('date').textContent = 'Расчёт от ' + new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+  try {
+    var d = JSON.parse(decodeURIComponent(location.hash.slice(1)));
+    if (!d || !isFinite(d.lo)) { throw new Error('empty'); }
+    total.textContent = d.hi === null ? 'от ' + f(d.lo) + ' ₽' : f(d.lo) + ' — ' + f(d.hi) + ' ₽';
+    var r = [
+      ['Площадь стенда', String(d.S).replace('.', ',') + ' м²'],
+      ['Тип застройки', L[d.type] || d.typeLabel || '—'],
+      ['Уровень', L[d.level] || d.levelLabel || '—']
+    ];
+    if (d.floorArea) { r.push(['Площадь второго этажа', String(d.floorArea).replace('.', ',') + ' м²']); }
+    if (d.ledCount) { r.push(['LED-экраны', String(d.ledCount)]); }
+    r.push(['Дополнительно', (d.extras || []).join(', ') || 'нет']);
+    if (d.hi === null) { r.push(['Верхняя граница', 'по проекту']); }
+    rows.innerHTML = r.map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('');
+  } catch (e) {
+    rows.innerHTML = '<dt>Нет данных</dt><dd>Откройте расчёт из калькулятора на странице.</dd>';
+  }
+})();
+</script>
+</body>
+</html>
